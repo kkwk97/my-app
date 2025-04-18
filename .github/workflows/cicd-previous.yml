@@ -1,0 +1,105 @@
+name: CICD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout source code
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+            distribution: 'temurin'
+            java-version: '17'
+
+      # # Build Backend Project
+      # - name: Build Backend Project
+      #   working-directory: ./beautyApp/backend
+      #   run: mvn clean package -DskipTests
+
+      # Run JUnit tests for Backend
+      - name: Run JUnit tests
+        working-directory: ./beautyApp/backend
+        run: mvn test
+      
+      # Upload test results as an artifact
+      - name: Upload JUnit test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: junit-results
+          path: ./beautyApp/backend/target/surefire-reports/*.xml
+          
+      # Build Frontend Docker Image
+      - name: Build Frontend Docker Image
+        working-directory: ./beautyApp/frontend
+        run: |
+          docker build -t sangasangasanga/swe5006-frontend:latest -f Dockerfile .
+      
+      # Build Backend Docker Image
+      - name: Build Backend Docker Image
+        working-directory: ./beautyApp/backend
+        run: |
+          docker build -t sangasangasanga/swe5006-backend:latest -f Dockerfile .
+      
+      # Login to Docker Hub
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      # Push Frontend Docker Image
+      - name: Push Frontend Docker Image
+        run: docker push sangasangasanga/swe5006-frontend:latest
+      
+      # Push Backend Docker Image
+      - name: Push Backend Docker Image
+        run: docker push sangasangasanga/swe5006-backend:latest
+
+  deploy-frontend:
+    needs: build
+    runs-on: swe5006-frontend 
+    steps:
+      # Pull Frontend Docker Image
+      - name: Pull Frontend Docker Image
+        run: |
+          docker system prune -f
+          docker pull sangasangasanga/swe5006-frontend:latest
+
+      # Stop existing Frontend container
+      - name: Stop existing Frontend container
+        run: docker stop frontend-container || true
+
+      # Remove existing Frontend container
+      - name: Remove Frontend container
+        run: docker rm frontend-container || true
+      
+      # Deploy Frontend
+      - name: Deploy Frontend
+        run: docker run -d -p 3000:3000 --name frontend-container sangasangasanga/swe5006-frontend:latest
+      
+  deploy-backend:
+    needs: build
+    runs-on: swe5006-backend 
+    steps:
+      # Pull Backend Docker Image
+      - name: Pull Backend Docker Imag
+        run: |
+          docker system prune -f
+          docker pull sangasangasanga/swe5006-backend:latest
+      
+      # Stop existing Backend container
+      - name: Stop Backend container
+        run: docker stop backend-container || true
+
+      # Remove existing Backend container
+      - name: Remove Backend container
+        run: docker rm backend-container || true
+
+      # Deploy Backend
+      - name: Deploy Backend
+        # run: docker run -d -p 8080:8080 --name backend-container sangasangasanga/swe5006-backend:latest
+        run: docker run -d -p 8401:8401 --name backend-container sangasangasanga/swe5006-backend:latest
