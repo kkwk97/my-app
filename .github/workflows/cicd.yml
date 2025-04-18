@@ -46,4 +46,4 @@
 
         # Deploy Frontend container
         - name: Deploy Frontend
-          run: docker run -d -p 80:3000 --name my-app-container kkwk1997/my-app:latest
+          run: docker run -d -p 80:80 --name my-app-container kkwk1997/my-app:latest
