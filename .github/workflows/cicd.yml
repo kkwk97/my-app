@@ -12,11 +12,16 @@
         - name: Checkout source
           uses: actions/checkout@v3
 
+        # # List files to verify the directory structure
+        - name: List files in the current directory
+          run: ls -alh
+
         # Build Frontend Docker Image
         - name: Build Frontend Docker Image
           working-directory: ./my-app
           run: |
-            docker build -t kkwk1997/my-app:latest -f Dockerfile .
+            docker build -t kkwk1997/my-app:latest -f ./my-app/Dockerfile ./my-app
+
 
         # Login to Docker Hub
         - name: Login to Docker Hub
