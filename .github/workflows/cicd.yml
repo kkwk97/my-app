@@ -28,7 +28,7 @@
 
     deploy-frontend:
       needs: build
-      runs-on: swe5006-frontend
+      runs-on: ip-172-31-12-112
       steps:
         # Pull Frontend Docker Image
         - name: Pull Frontend Docker Image
