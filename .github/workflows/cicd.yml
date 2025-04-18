@@ -28,7 +28,7 @@
 
     deploy-frontend:
       needs: build
-      runs-on: ip-172-31-12-112
+      runs-on: [self-hosted, Linux, X64] 
       steps:
         # Pull Frontend Docker Image
         - name: Pull Frontend Docker Image
