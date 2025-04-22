@@ -27,22 +27,22 @@
           run: docker push kkwk1997/my-app:latest
 
     # archive-backend:
-    archive:
-      stage: archiving
-      before_script:
-        - apt-get update
-        - apt-get install zip -y
+    # archive:
+    #   stage: archiving
+    #   before_script:
+    #     - apt-get update
+    #     - apt-get install zip -y
 
-      script:
-        - echo "Archiving multiple lambda functions"
-        - cd backend
-        - zip -r "../login.zip" login/
-        - zip -r "../register.zip" register/
+    #   script:
+    #     - echo "Archiving multiple lambda functions"
+    #     - cd backend
+    #     - zip -r "../login.zip" login/
+    #     - zip -r "../register.zip" register/
 
-      artifacts:
-        paths:
-          - login.zip
-          - register.zip
+    #   artifacts:
+    #     paths:
+    #       - login.zip
+    #       - register.zip
 
     deploy-frontend:
       needs: build
