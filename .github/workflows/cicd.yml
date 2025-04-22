@@ -26,6 +26,21 @@
         - name: Push Frontend Docker Image
           run: docker push kkwk1997/my-app:latest
 
+    # archive-backend:
+    #   stage: archive-backend
+
+    #   before_script:
+    #     - apt-get update
+    #     - apt-get install zip -y
+
+    #   script:
+    #     - echo "Archiving lambda code"
+    #     - zip -r $CI_PROJECT_NAME.zip *
+
+    #   artifacts:
+    #     paths:
+    #       - $CI_PROJECT_NAME.zip
+
     deploy-frontend:
       needs: build
       runs-on: [self-hosted, Linux, X64] 
@@ -47,3 +62,14 @@
         # Deploy Frontend container
         - name: Deploy Frontend
           run: docker run -d -p 80:80 --name my-app-container kkwk1997/my-app:latest
+    
+    # deploy-backend:
+    #   stage: deploy-backend
+
+    #   before_script:
+    #     - pip install awscli
+    #     - aws --version
+
+    #   script:
+    #     - echo "Deploying code"
+    #     - aws lambda update-function-code --function-name $LAMBDA_FUNCTION --zip-file fileb://$CI_PROJECT_NAME.zip
