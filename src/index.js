@@ -1,17 +1,17 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import './index.css';
-import Login from './login'; // Use lowercase only if the file is still named login.js
-import reportWebVitals from './reportWebVitals';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Login from './login';
+import Default from './Default';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <Login />
-    </BrowserRouter>
-  </React.StrictMode>
-);
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Default />} />
+        <Route path="/login" element={<Login />} />
+      </Routes>
+    </Router>
+  );
+}
 
-reportWebVitals();
+export default App;
