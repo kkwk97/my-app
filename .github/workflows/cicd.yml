@@ -27,19 +27,22 @@
           run: docker push kkwk1997/my-app:latest
 
     # archive-backend:
-    #   stage: archive-backend
+    archive:
+      stage: archiving
+      before_script:
+        - apt-get update
+        - apt-get install zip -y
 
-    #   before_script:
-    #     - apt-get update
-    #     - apt-get install zip -y
+      script:
+        - echo "Archiving multiple lambda functions"
+        - cd backend
+        - zip -r "../login.zip" login/
+        - zip -r "../register.zip" register/
 
-    #   script:
-    #     - echo "Archiving lambda code"
-    #     - zip -r $CI_PROJECT_NAME.zip *
-
-    #   artifacts:
-    #     paths:
-    #       - $CI_PROJECT_NAME.zip
+      artifacts:
+        paths:
+          - login.zip
+          - register.zip
 
     deploy-frontend:
       needs: build
@@ -63,13 +66,20 @@
         - name: Deploy Frontend
           run: docker run -d -p 80:80 --name my-app-container kkwk1997/my-app:latest
     
+    
     # deploy-backend:
     #   stage: deploy-backend
-
     #   before_script:
     #     - pip install awscli
     #     - aws --version
+    
+    #   variables:
+    #     LOGIN_LAMBDA_FUNCTION: "your-login-function-name"
+    #     REGISTER_LAMBDA_FUNCTION: "your-register-function-name"
 
     #   script:
-    #     - echo "Deploying code"
-    #     - aws lambda update-function-code --function-name $LAMBDA_FUNCTION --zip-file fileb://$CI_PROJECT_NAME.zip
+    #     - echo "Deploying lambda functions"
+    #     - aws lambda update-function-code --function-name $LOGIN_LAMBDA_FUNCTION --zip-file fileb://login.zip
+    #     - aws lambda update-function-code --function-name $REGISTER_LAMBDA_FUNCTION --zip-file fileb://register.zip
+
+     
