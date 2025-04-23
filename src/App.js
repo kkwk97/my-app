@@ -33,6 +33,7 @@ import HomePage from './HomePage';
 import NewPostPage from './NewPostPage';
 import EditPostPage from './EditPostPage';
 import TripList from './TripList'
+import NewTripPage from './NewTripPage';
 
 function App() {
   // return (
@@ -60,6 +61,7 @@ function App() {
 
         {/* Protected Routes (Requires Authentication) */}
         <Route path="/trips" element={isAuthenticated ? <TripList /> : <Login />} />
+        <Route path="/new-trip" element={isAuthenticated ? <NewTripPage /> : <Login />} />
         {/* <Route path="/trips" element={isAuthenticated ? <TripList /> : <LoginPage />} />
         <Route path="/trip/:id" element={isAuthenticated ? <TripDetail /> : <LoginPage />} />
         <Route path="/shared-trip/:id" element={isAuthenticated ? <SharedTripDetail /> : <LoginPage />} />
