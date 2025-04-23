@@ -28,12 +28,15 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './login';
 import Default from './Default';
+import RegisterPage from './RegisterPage';
+
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Default />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<RegisterPage />} />
       </Routes>
     </Router>
   );
