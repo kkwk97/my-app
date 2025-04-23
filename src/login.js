@@ -10,7 +10,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('https://paze6htto9.execute-api.us-east-1.amazonaws.com/UAT/login', {
+      const response = await fetch('https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/user/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
