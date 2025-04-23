@@ -24,12 +24,12 @@ const RegisterPage = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch('http://localhost:5000/api/register', {
+      const res = await fetch('https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/user/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
+        // credentials: 'include',
         body: JSON.stringify(formData)
       });
 

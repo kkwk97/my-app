@@ -20,7 +20,7 @@ const BaseLayout = ({ children }) => {
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav me-auto">
               <li className="nav-item">
-                <Link className="nav-link" to="/">Home</Link>
+                <Link className="nav-link" to="/home">Home</Link>
               </li>
               {isAuthenticated && (
                 <>

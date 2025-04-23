@@ -29,14 +29,46 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './login';
 import Default from './Default';
 import RegisterPage from './RegisterPage';
+import HomePage from './HomePage';
 
 function App() {
+  // return (
+  //   <Router>
+  //     <Routes>
+  //       <Route path="/" element={<Default />} />
+  //       <Route path="/login" element={<Login />} />
+  //       <Route path="/register" element={<RegisterPage />} />
+  //       <Route path="/register" element={<HomePage />} />
+  //     </Routes>
+  //   </Router>
+  // );
+  const isAuthenticated = true; // Set this based on actual authentication logic
+
   return (
     <Router>
+      {/* <NavBar isAuthenticated={isAuthenticated} /> */}
       <Routes>
-        <Route path="/" element={<Default />} />
+        {/* HomePage Route */}
+        <Route path="/home" element={<HomePage isAuthenticated={isAuthenticated} />} />
+
+        {/* Authentication Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RegisterPage />} />
+
+        {/* Protected Routes (Requires Authentication) */}
+        {/* <Route path="/trips" element={isAuthenticated ? <TripList /> : <LoginPage />} />
+        <Route path="/trip/:id" element={isAuthenticated ? <TripDetail /> : <LoginPage />} />
+        <Route path="/shared-trip/:id" element={isAuthenticated ? <SharedTripDetail /> : <LoginPage />} />
+        <Route path="/new-trip" element={isAuthenticated ? <NewTripPage /> : <LoginPage />} />
+        <Route path="/itinerary" element={isAuthenticated ? <ItineraryPage /> : <LoginPage />} />
+        <Route path="/trip-split" element={isAuthenticated ? <TripSplit /> : <LoginPage />} /> */}
+
+        {/* Post Routes */}
+        {/* <Route path="/new-post" element={isAuthenticated ? <NewPostPage /> : <LoginPage />} /> */}
+        {/* <Route path="/edit-post/:postId" element={isAuthenticated ? <EditPostPage /> : <LoginPage />} /> */}
+
+        {/* Find Trips Page */}
+        {/* <Route path="/find-trips" element={<FindTripsPage />} /> */}
       </Routes>
     </Router>
   );
