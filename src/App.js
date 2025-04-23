@@ -31,6 +31,7 @@ import Default from './Default';
 import RegisterPage from './RegisterPage';
 import HomePage from './HomePage';
 import NewPostPage from './NewPostPage';
+import EditPostPage from './EditPostPage';
 
 function App() {
   // return (
@@ -67,7 +68,7 @@ function App() {
 
         {/* Post Routes */}
         <Route path="/new-post" element={isAuthenticated ? <NewPostPage /> : <Login />} />
-        {/* <Route path="/edit-post/:postId" element={isAuthenticated ? <EditPostPage /> : <LoginPage />} /> */}
+        <Route path="/edit-post/:postId" element={isAuthenticated ? <EditPostPage /> : <Login />} />
 
         {/* Find Trips Page */}
         {/* <Route path="/find-trips" element={<FindTripsPage />} /> */}
