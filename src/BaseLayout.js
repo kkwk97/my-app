@@ -28,7 +28,7 @@ const BaseLayout = ({ children }) => {
                     <Link className="nav-link" to="/find-trips">Find Trips</Link>
                   </li>
                   <li className="nav-item">
-                    <Link className="nav-link" to="/my-trips">My Trips</Link>
+                    <Link className="nav-link" to="/trips">My Trips</Link>
                   </li>
                 </>
               )}
