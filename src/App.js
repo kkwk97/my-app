@@ -30,6 +30,7 @@ import Login from './login';
 import Default from './Default';
 import RegisterPage from './RegisterPage';
 import HomePage from './HomePage';
+import NewPostPage from './NewPostPage';
 
 function App() {
   // return (
@@ -63,8 +64,9 @@ function App() {
         <Route path="/itinerary" element={isAuthenticated ? <ItineraryPage /> : <LoginPage />} />
         <Route path="/trip-split" element={isAuthenticated ? <TripSplit /> : <LoginPage />} /> */}
 
+
         {/* Post Routes */}
-        {/* <Route path="/new-post" element={isAuthenticated ? <NewPostPage /> : <LoginPage />} /> */}
+        <Route path="/new-post" element={isAuthenticated ? <NewPostPage /> : <Login />} />
         {/* <Route path="/edit-post/:postId" element={isAuthenticated ? <EditPostPage /> : <LoginPage />} /> */}
 
         {/* Find Trips Page */}
