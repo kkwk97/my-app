@@ -2,6 +2,8 @@ import json
 import boto3
 from decimal import Decimal
 
+from boto3.dynamodb.conditions import Key, Attr
+
 client = boto3.client('dynamodb')
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table('travel-blog')
@@ -16,39 +18,47 @@ def lambda_handler(event, context):
         "Content-Type": "application/json"
     }
 
+    response = table.update_item(
+        Key={'id': 'userCounter'},
+        UpdateExpression="ADD #cnt :val",
+        ExpressionAttributeNames={'#cnt': 'count'},
+        ExpressionAttributeValues={':val': 1},
+        ReturnValues="UPDATED_NEW"
+    )
+
+    # Retrieve the new value
+    userId = response['Attributes']['count']
+
     try:
         if event['routeKey'] == "POST /register":
-            # Get user from database
+        
             requestJSON = json.loads(event['body'])
-            response = table.get_item(
-                Key={
-                    'id': requestJSON['username']
-                }
+            # requestJSON = event['body']
+          
+            response = table.query(
+                IndexName='username-index',
+                KeyConditionExpression=Key('username').eq(requestJSON['username'])
             )
+
             
-            if 'Item' in response:
-              statusCode = 401
-              body = [{
-                        'message': 'Username exists'
-                    }]
-              
-               
-            
-            # Check if user exists and password matches
-            if 'Item' in response and response['Item']['password'] == requestJSON['password']:
-                # Generate token (you should use a proper JWT library)
-                # token = generate_token(response['Item']['username'])
-                token = '123' + response['Item']['username']
-                body =  [{
-                    'token': token,
-                    'userId': response['Item']['username']
-                }]
-                
+            if 'Item' or 'Items' in response:
+                statusCode = 401
+                body = [{
+                            'message': 'Username exists'
+                        }]
             else:
-              statusCode = 401
-              body = [{
-                        'message': 'Invalid credentials'
-                    }]
+                requestJSON = json.loads(event['body'])
+                # requestJSON = event['body']
+
+                table.put_item(
+                    Item={
+                        'id': str(userId),
+                        'username': requestJSON['username'],
+                        # 'password': Decimal(str(requestJSON['price'])),
+                        'password': requestJSON['password'],
+                        'email': requestJSON['email']
+                    })
+                body = response
     except KeyError:
         statusCode = 400
         body = 'Unsupported route: ' + event['routeKey']
