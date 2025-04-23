@@ -1,17 +1,21 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './login';
-import Default from './Default';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import './index.css';
+import Login from './login'; // Use lowercase only if the file is still named login.js
+import Default from './Default'; // Use lowercase only if the file is still named login.js
+import reportWebVitals from './reportWebVitals';
 
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Default />} />
-        <Route path="/login" element={<Login />} />
-      </Routes>
-    </Router>
-  );
-}
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <Login />
+      <Default />
+    </BrowserRouter>
+  </React.StrictMode>
+);
 
-export default App;
+
+
+reportWebVitals();
