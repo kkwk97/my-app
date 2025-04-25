@@ -21,7 +21,7 @@ FROM nginx:alpine
 
 # Step 8: Copy the built app from the previous step to Nginx's web root
 COPY --from=build /app/build /usr/share/nginx/html
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf  # Copy the Nginx config file here
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf 
 
 
 # Step 9: Expose port 80 to access the app
