@@ -25,7 +25,7 @@
 // export default App;
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
 import Login from './login';
 import Default from './Default';
 import RegisterPage from './RegisterPage';
@@ -54,6 +54,9 @@ function App() {
       <Routes>
         {/* HomePage Route */}
         <Route path="/home" element={<HomePage isAuthenticated={isAuthenticated} />} />
+
+        {/* Redirect root path to /login */}
+        <Route path="/" element={<Navigate to="/login" />} />
 
         {/* Authentication Routes */}
         <Route path="/login" element={<Login />} />
