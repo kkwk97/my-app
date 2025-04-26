@@ -18,18 +18,28 @@ const NewTripPage = () => {
       [id]: value
     }));
   };
+  const userId = localStorage.getItem('userId');
+  const data = {
+    title: formData['title'],
+    start_date: formData['start_date'],
+    end_date: formData['end_date'],
+    user_id: userId,
+
+  }
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await fetch('/itinerary/new', {
+      const res = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/create-trip`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include', // for session cookies if using Flask-Login
-        body: JSON.stringify(formData)
+        // credentials: 'include', // for session cookies if using Flask-Login
+        body: JSON.stringify(data)
       });
 
       if (res.ok) {

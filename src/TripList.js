@@ -6,42 +6,68 @@ function TripList() {
   const [ownedTrips, setOwnedTrips] = useState([]);
   const [sharedTrips, setSharedTrips] = useState([]);
 
-  // Fetch owned trips
+  const userId = localStorage.getItem('userId');
+
+  // // Fetch owned trips
+  // useEffect(() => {
+  //   const fetchOwnedTrips = async () => {
+  //     try {
+  //       const response = await fetch('https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips', {
+  //         method: 'GET',
+  //         body: {"user_id":userId}
+  //       });
+  //       if (response.ok) {
+  //         const data = await response.json();
+  //         setOwnedTrips(data);
+  //       } else {
+  //         console.error("Failed to fetch owned trips");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching owned trips:", error);
+  //     }
+  //   };
+
+  //   fetchOwnedTrips();
+  // }, []);
+
+
+  // // Fetch shared trips
+  // useEffect(() => {
+  //   const fetchSharedTrips = async () => {
+  //     try {
+  //       const response = await fetch('https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips', {
+  //         method: 'GET',
+  //         body: {"user_id":userId}
+  //       }); 
+  //       if (response.ok) {
+  //         const data = await response.json();
+  //         setSharedTrips(data);
+  //       } else {
+  //         console.error("Failed to fetch shared trips");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching shared trips:", error);
+  //     }
+  //   };
+
+  //   fetchSharedTrips();
+  // }, []);
+
   useEffect(() => {
-    const fetchOwnedTrips = async () => {
-      try {
-        const response = await fetch('/api/owned_trips'); // Replace with the correct endpoint
-        if (response.ok) {
-          const data = await response.json();
-          setOwnedTrips(data);
-        } else {
-          console.error("Failed to fetch owned trips");
-        }
-      } catch (error) {
-        console.error("Error fetching owned trips:", error);
-      }
-    };
-
-    fetchOwnedTrips();
-  }, []);
-
-  // Fetch shared trips
-  useEffect(() => {
-    const fetchSharedTrips = async () => {
-      try {
-        const response = await fetch('/api/shared_trips'); // Replace with the correct endpoint
-        if (response.ok) {
-          const data = await response.json();
-          setSharedTrips(data);
-        } else {
-          console.error("Failed to fetch shared trips");
-        }
-      } catch (error) {
-        console.error("Error fetching shared trips:", error);
-      }
-    };
-
-    fetchSharedTrips();
+      // Fetch trips from your Flask backend API
+      // fetch('/api/trips')
+      fetch('https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/mytrip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: userId })
+      }).then(res => res.json())
+        .then(data => {
+          setOwnedTrips(data.owned_trips || []);
+          setSharedTrips(data.shared_trips || []);
+        })
+        .catch(err => console.error('Error fetching trips:', err));
   }, []);
 
   return (
@@ -98,7 +124,7 @@ function TripList() {
                     </p>
                     <p className="card-text">
                       <small className="text-muted">
-                        Shared by {trip.user.username}
+                        Shared by {trip.user_id}
                       </small>
                     </p>
                     <Link

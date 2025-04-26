@@ -34,7 +34,11 @@ import NewPostPage from './NewPostPage';
 import EditPostPage from './EditPostPage';
 import TripList from './TripList'
 import NewTripPage from './NewTripPage';
-
+import ItineraryPage from './ItineraryPage';
+import TripDetail from './TripDetail';
+import TripSplit from './TripSplit';
+import SharedTripDetail from './SharedTripDetail';
+import FindTripsPage from './FindTripsPage';
 function App() {
   // return (
   //   <Router>
@@ -65,12 +69,10 @@ function App() {
         {/* Protected Routes (Requires Authentication) */}
         <Route path="/trips" element={isAuthenticated ? <TripList /> : <Login />} />
         <Route path="/new-trip" element={isAuthenticated ? <NewTripPage /> : <Login />} />
-        {/* <Route path="/trips" element={isAuthenticated ? <TripList /> : <LoginPage />} />
-        <Route path="/trip/:id" element={isAuthenticated ? <TripDetail /> : <LoginPage />} />
-        <Route path="/shared-trip/:id" element={isAuthenticated ? <SharedTripDetail /> : <LoginPage />} />
-        <Route path="/new-trip" element={isAuthenticated ? <NewTripPage /> : <LoginPage />} />
-        <Route path="/itinerary" element={isAuthenticated ? <ItineraryPage /> : <LoginPage />} />
-        <Route path="/trip-split" element={isAuthenticated ? <TripSplit /> : <LoginPage />} /> */}
+        <Route path="/trip/:id" element={isAuthenticated ? <TripDetail /> : <Login />} />
+        <Route path="/shared-trip/:id" element={isAuthenticated ? <SharedTripDetail /> : <Login />} />
+        <Route path="/itinerary" element={isAuthenticated ? <ItineraryPage /> : <Login />} />
+        <Route path="/trip-split" element={isAuthenticated ? <TripSplit /> : <Login />} />
 
 
         {/* Post Routes */}
@@ -78,7 +80,7 @@ function App() {
         <Route path="/edit-post/:postId" element={isAuthenticated ? <EditPostPage /> : <Login />} />
 
         {/* Find Trips Page */}
-        {/* <Route path="/find-trips" element={<FindTripsPage />} /> */}
+        <Route path="/find-trips" element={<FindTripsPage />} />
       </Routes>
     </Router>
   );

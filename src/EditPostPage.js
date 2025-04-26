@@ -1,6 +1,7 @@
 // src/pages/EditPostPage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import BaseLayout from './BaseLayout';
 
 const EditPostPage = () => {
   const { postId } = useParams();
@@ -9,11 +10,11 @@ const EditPostPage = () => {
   const [post, setPost] = useState(null);
   const [deleteImages, setDeleteImages] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
-
+  const userId = localStorage.getItem('userId');
   useEffect(() => {
     // Fetch post data from API
     console.log("Fetching post with ID:", postId);
-    fetch(`http://localhost:5000/api/posts/${postId}`)
+    fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/posts/edit-post/${postId}`)
       .then(res => res.json())
       .then(data => setPost(data))
       .catch(err => console.error('Failed to fetch post:', err));
@@ -57,14 +58,22 @@ const EditPostPage = () => {
 
     deleteImages.forEach(id => formData.append('delete_images', id));
 
-    fetch(`http://localhost:5000/api/posts/${postId}`, {
-      method: 'PUT',
-      body: formData,
-      credentials: 'include', // ✅ required for Flask-Login session cookies
+    const data = {
+      title: formData.get('title'),
+      location: formData.get('location'),
+      content: formData.get('content'),
+      'username': userId,
+      'user_id': '',
+      // 'images': images
+    }
+
+    fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/posts/edit-post/${postId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
     })
       .then(res => {
         if (res.ok) {
-          navigate('/');
+          navigate('/home');
         } else {
           console.error('Failed to update post');
         }
@@ -74,6 +83,7 @@ const EditPostPage = () => {
   if (!post) return <p>Loading...</p>;
 
   return (
+    <BaseLayout>
     <div className="row justify-content-center mt-4">
       <div className="col-md-8">
         <div className="card">
@@ -184,6 +194,7 @@ const EditPostPage = () => {
         </div>
       </div>
     </div>
+    </BaseLayout>
   );
 };
 
