@@ -78,11 +78,11 @@ const FindTripsPage = () => {
                       {formatDate(trip.start_date)} - {formatDate(trip.end_date)}
                     </p>
                     <p className="card-text">
-                      <small className="text-muted">By {trip.user.username}</small>
+                      <small className="text-muted">By {trip.user_id}</small>
                     </p>
                     <button
                       className="btn btn-primary"
-                      onClick={() => navigate(`/public-trip/${trip.id}`)}
+                      onClick={() => navigate(`/public-trip/${trip['trip-id']}`)}
                     >
                       View Itinerary
                     </button>
