@@ -65,9 +65,10 @@ const BaseLayout = ({ children }) => {
         {children}
       </div>
 
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-      <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-      <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+     
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA74UbU1Wwv6pLjJerlhSCI3gIWbzcyLQs"></script>
     </div>
   );
 };

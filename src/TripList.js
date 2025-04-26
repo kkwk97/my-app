@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom"; // To handle routing to trip detail page
 import BaseLayout
- from "./BaseLayout";
+from "./BaseLayout";
+import { useNavigate } from 'react-router-dom';
+
+
+ 
 function TripList() {
   const [ownedTrips, setOwnedTrips] = useState([]);
   const [sharedTrips, setSharedTrips] = useState([]);
+  const navigate = useNavigate();
 
   const userId = localStorage.getItem('userId');
 
@@ -70,6 +75,7 @@ function TripList() {
         .catch(err => console.error('Error fetching trips:', err));
   }, []);
 
+
   return (
     <BaseLayout>
     <div className="container">
@@ -95,8 +101,9 @@ function TripList() {
                       {new Date(trip.end_date).toLocaleDateString()}
                     </p>
                     <Link
-                      to={`/trip/${trip.id}`}
+                      to={`/trip/${trip['trip-id']}`}
                       className="btn btn-primary"
+                      // onClick={() => navigate(`/trip/${trip['trip-id']}`)}
                     >
                       View Itinerary
                     </Link>
@@ -127,12 +134,13 @@ function TripList() {
                         Shared by {trip.user_id}
                       </small>
                     </p>
-                    <Link
-                      to={`/trip/${trip.id}`}
+                    <button
+                      // to={`/trip/${trip['trip-id']}`}
                       className="btn btn-primary"
+                      onClick={() => navigate(`/trip/${trip['trip-id']}`)}
                     >
                       View Itinerary
-                    </Link>
+                    </button>
                   </div>
                 </div>
               </div>
