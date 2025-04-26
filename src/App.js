@@ -69,7 +69,7 @@ function App() {
         {/* Protected Routes (Requires Authentication) */}
         <Route path="/trips" element={isAuthenticated ? <TripList /> : <Login />} />
         <Route path="/new-trip" element={isAuthenticated ? <NewTripPage /> : <Login />} />
-        <Route path="/trip/:id" element={isAuthenticated ? <TripDetail /> : <Login />} />
+        <Route path="/trip/:tripId" element={isAuthenticated ? <TripDetail /> : <Login />} />
         <Route path="/shared-trip/:id" element={isAuthenticated ? <SharedTripDetail /> : <Login />} />
         <Route path="/itinerary" element={isAuthenticated ? <ItineraryPage /> : <Login />} />
         <Route path="/trip-split" element={isAuthenticated ? <TripSplit /> : <Login />} />
