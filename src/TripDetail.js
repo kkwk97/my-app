@@ -56,12 +56,13 @@ const TripDetail = () => {
                     'Content-Type': 'application/json',
                 }
             });
-
+            
             const data = await response.json();
-
+            
             if (response.ok) {
                 // Update shared users list
-                setSharedUsers(prevUsers =>
+                setSharedUsers(prevUsers => 
+
                     prevUsers.filter(user => user.id !== userId)
                 );
             } else {
@@ -468,6 +469,7 @@ const TripDetail = () => {
             });
 
             const responseData = await response.json();
+
 
             if (response.ok) {
                 // Refresh shared users list
