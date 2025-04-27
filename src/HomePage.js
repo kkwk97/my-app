@@ -45,6 +45,19 @@ const HomePage = ({ isAuthenticated }) => {
     fetchPosts();
   };
 
+  const handleDelete = async (postId) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this post?');
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/posts/${postId}`);
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));  // update UI by removing deleted post
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      alert('Failed to delete the post.');
+    }
+  };
+
   return (
     <BaseLayout>
       <div className="container">
@@ -52,7 +65,7 @@ const HomePage = ({ isAuthenticated }) => {
 
         {/* Search Form */}
         <form onSubmit={handleSearch} className="mb-4">
-          {/* You can add more search form fields if necessary */}
+          {/* You can add search fields here if you want */}
         </form>
 
         {/* New Post Button */}
@@ -107,23 +120,30 @@ const HomePage = ({ isAuthenticated }) => {
                                 className="img-fluid rounded"
                                 style={{
                                   width: '100%',
-                                  height: 'auto',         // let height adjust based on image
-                                  maxHeight: '300px',      // limit maximum height
-                                  objectFit: 'contain',    // keep full image without cutting
+                                  height: 'auto',
+                                  maxHeight: '300px',
+                                  objectFit: 'contain',
                                 }}
                               />
                             </div>
-
                           );
                         })}
                       </div>
                     )}
 
-                    {/* Edit button if current user is the author */}
+                    {/* Edit and Delete buttons */}
                     {isAuthenticated && post.author?.username === userId && (
-                      <Link to={`/edit-post/${post.id}`} className="btn btn-primary btn-sm mt-2">
-                        Edit
-                      </Link>
+                      <div className="mt-2 d-flex gap-2">
+                        <Link to={`/edit-post/${post.id}`} className="btn btn-primary btn-sm">
+                          Edit
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(post.id)}
+                          className="btn btn-danger btn-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
