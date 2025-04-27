@@ -26,14 +26,23 @@ const FindTripsPage = () => {
         },
         body: JSON.stringify({ 
           user_id: userId,
-          ...searchParams 
+          title: searchParams.title,
+          country: searchParams.country,
+          from_date: searchParams.from_date,
+          to_date: searchParams.to_date
         })
       });
+      
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+      
       const data = await response.json();
       setOwnedTrips(data.owned_trips || []);
       setPublicTrips(data.public_trips || []);
     } catch (err) {
       console.error('Error searching trips:', err);
+      alert('Failed to search trips. Please try again.');
     }
   };
 
