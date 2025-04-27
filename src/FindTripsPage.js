@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BaseLayout from './BaseLayout';
 
+import { Link } from "react-router-dom";
+
 const FindTripsPage = () => {
   const [ownedTrips, setOwnedTrips] = useState([]);
   const [publicTrips, setPublicTrips] = useState([]);
@@ -51,12 +53,13 @@ const FindTripsPage = () => {
                     <p className="card-text">
                       {formatDate(trip.start_date)} - {formatDate(trip.end_date)}
                     </p>
-                    <button
+                    <Link
+                      to={`/shared-trip/${trip['trip-id']}`}
                       className="btn btn-primary"
-                      onClick={() => navigate(`/shared-trip/${trip['trip-id']}`)}
+                      // onClick={() => navigate(`/trip/${trip['trip-id']}`)}
                     >
                       View Itinerary
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
