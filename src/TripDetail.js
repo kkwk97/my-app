@@ -388,17 +388,30 @@ const TripDetail = () => {
     };
 
     const deleteLocation = async (locationId) => {
-        if (window.confirm('Are you sure you want to delete this location?')) {
-            try {
-                const response = await fetch(`/api/trips/${tripId}/days/${currentDay}/locations/${locationId}`, {
-                    method: 'DELETE'
-                });
-                if (response.ok) {
-                    loadLocations();
+        try {
+            const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/location/delete-location/${locationId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
                 }
-            } catch (error) {
+            });
+            
+            if (response.ok) {
+                // Remove location from state
+                setLocations(prevLocations => 
+                    prevLocations.filter(loc => loc.id !== locationId)
+                );
+                
+                // Remove marker from map
+                setMarkers(prevMarkers => 
+                    prevMarkers.filter(marker => marker.id !== locationId)
+                );
+            } else {
+                const error = await response.json();
                 console.error('Error deleting location:', error);
             }
+        } catch (error) {
+            console.error('Error:', error);
         }
     };
 
