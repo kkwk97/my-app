@@ -27,6 +27,38 @@ const FindTripsPage = () => {
       .catch(err => console.error('Error fetching trips:', err));
   }, []);
 
+  const handleCopyTrip = async (tripId) => {
+    const confirmCopy = window.confirm('Are you sure you want to copy this trip into your own trips?');
+    if (!confirmCopy) return;
+
+    try {
+      const data = {
+        trip_id: tripId,
+        username: userId,
+        user_id: userId
+      };
+
+      const res = await fetch('https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/copy-trip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        alert('Trip copied successfully!');
+        // Optionally, you can navigate or refresh trips
+      } else {
+        const errorData = await res.json();
+        alert(errorData.message || 'Failed to copy trip.');
+      }
+    } catch (error) {
+      console.error('Error copying trip:', error);
+      alert('Something went wrong while copying trip.');
+    }
+  };
+
   const formatDate = (dateStr) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'short',
@@ -83,12 +115,20 @@ const FindTripsPage = () => {
                     <p className="card-text">
                       <small className="text-muted">By {trip.user_id}</small>
                     </p>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => navigate(`/public-trip/${trip['trip-id']}`)}
-                    >
-                      View Itinerary
-                    </button>
+                    <div className="d-grid gap-2">
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => navigate(`/public-trip/${trip['trip-id']}`)}
+                      >
+                        View Itinerary
+                      </button>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => handleCopyTrip(trip['trip-id'])}
+                      >
+                        Copy Trip
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
