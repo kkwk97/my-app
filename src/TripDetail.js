@@ -20,6 +20,7 @@ const TripDetail = () => {
     const [trip, setTrip] = useState(null);
     const [duration, setDuration] = useState(null);
     const [isPublic, setIsPublic] = useState(false);
+    const [expenses, setExpenses] = useState([]);
 
     const [currentDay, setCurrentDay] = useState(1);
     const [locations, setLocations] = useState([]);
@@ -166,6 +167,74 @@ const TripDetail = () => {
             setDuration(data.duration)
         } catch (error) {
             console.error('Error fetching trip:', error);
+        }
+    };
+
+   // Add this function before the return statement
+    const unshareTrip = async (userId) => {
+        try {
+            const response = await fetch(`/api/trips/${tripId}/unshare`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    trip_id: tripId,
+                    user_id: userId
+                })
+            });
+            
+            if (response.ok) {
+                // Remove the user from the shared users list
+                setSharedUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+            } else {
+                const error = await response.json();
+                console.error('Error unsharing trip:', error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
+
+    // Add this function before the return statement
+    const handleExpenseSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const formData = new FormData(e.target);
+            const description = formData.get('description');
+            const amount = parseFloat(formData.get('amount'));
+            const paidBy = formData.get('paid_by');
+            const sharedBy = Array.from(formData.getAll('shared_by'));
+
+            const response = await fetch(`/api/trips/${tripId}/expenses`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    trip_id: tripId,
+                    description,
+                    amount,
+                    paid_by: paidBy,
+                    shared_by: sharedBy,
+                    day_number: currentDay
+                })
+            });
+            
+            if (response.ok) {
+                const expense = await response.json();
+                
+                // Update expenses list
+                setExpenses(prevExpenses => [...prevExpenses, expense]);
+                
+                // Close modal
+                setShowAddExpenseModal(false);
+            } else {
+                const error = await response.json();
+                console.error('Error adding expense:', error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
         }
     };
 
