@@ -1428,6 +1428,68 @@ const TripDetail = () => {
         }
     };
 
+    const [summary, setSummary] = useState([]);
+    const [newExpense, setNewExpense] = useState({
+      description: "",
+      amount: "",
+      splits: [],
+    });
+
+    useEffect(() => {
+      fetchExpenses();
+    }, [tripId]);
+
+    const fetchExpenses = async () => {
+        console.log("Trip ID:", tripId);
+        console.log(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/manage_expense/${tripId}/user/${localStorage.getItem('userId')}`);
+
+        try {
+          const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/manage_expense/${tripId}/user/${localStorage.getItem('userId')}`, {
+            method: 'GET',
+            mode: 'cors',  // <---- add this
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+      
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+          }
+      
+          const data = await response.json();
+          setExpenses(data);
+      
+          const computedSummary = computeSummary(data);
+          setSummary(computedSummary);
+        } catch (error) {
+          console.error("Error fetching expenses:", error);
+        }
+      };
+      
+
+    const computeSummary = (expenses) => {
+      const userTotals = {};
+
+      expenses.forEach((expense) => {
+        const payer = expense.paid_by;
+        userTotals[payer] = userTotals[payer] || { spent: 0, owed: 0 };
+        userTotals[payer].spent += parseFloat(expense.amount);
+
+        expense.splits.forEach((split) => {
+          userTotals[split.username] = userTotals[split.username] || { spent: 0, owed: 0 };
+          userTotals[split.username].owed += parseFloat(split.amount || 0);
+        });
+      });
+
+      return Object.keys(userTotals).map((name) => ({
+        name,
+        spent: userTotals[name].spent.toFixed(2),
+        owed: userTotals[name].owed.toFixed(2),
+        balance: (userTotals[name].spent - userTotals[name].owed).toFixed(2),
+      }));
+    };
+
     if (!trip) return <div>Loading...</div>;
 
     return (
@@ -1669,6 +1731,38 @@ const TripDetail = () => {
                     </div>
                 </div>
             )}
+
+              {/*show expense summary table*/}
+              <div className="card mt-4">
+              <div className="card-header">
+                <h5 className="mb-0">Trip Expenses Summary</h5>
+              </div>
+              <div className="card-body p-0">
+                <table className="table table-striped mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th>User</th>
+                      <th>Total Spent</th>
+                      <th>Total Owed</th>
+                      <th>Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {summary.map((item, idx) => (
+                      <tr key={idx}>
+                        <td>{item.name}</td>
+                        <td>${item.spent}</td>
+                        <td>${item.owed}</td>
+                        <td className={parseFloat(item.balance) >= 0 ? "text-success" : "text-danger"}>
+                          {parseFloat(item.balance) >= 0 ? "+" : ""}
+                          ${item.balance}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
             {/* Add Expense Modal */}
             {showAddExpenseModal && (
