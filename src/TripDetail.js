@@ -13,6 +13,7 @@ L.Icon.Default.mergeOptions({
     shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
+
 const GOOGLE_MAPS_API_KEY = 'AIzaSyA74UbU1Wwv6pLjJerlhSCI3gIWbzcyLQs'; // Replace with your actual API key
 
 const TripDetail = () => {
@@ -21,7 +22,7 @@ const TripDetail = () => {
     const [duration, setDuration] = useState(null);
     const [isPublic, setIsPublic] = useState(false);
     const [expenses, setExpenses] = useState([]);
-
+    const currentUser = localStorage.getItem('userId') ;
     const [currentDay, setCurrentDay] = useState(1);
     const [locations, setLocations] = useState([]);
     const [markers, setMarkers] = useState([]);
@@ -46,6 +47,33 @@ const TripDetail = () => {
             [name]: value
         }));
     };
+
+    const removeSharedUser = async (userId) => {
+        try {
+            const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/${tripId}/${currentUser}/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Update shared users list
+                setSharedUsers(prevUsers => 
+                    prevUsers.filter(user => user.id !== userId)
+                );
+            } else {
+                console.error('Error removing shared user:', data);
+                alert(`Error removing shared user: ${data.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to remove shared user. Please try again.');
+        }
+    };
+    
 
     const handleAddressChange = (e) => {
         const address = e.target.value;
@@ -289,11 +317,16 @@ const TripDetail = () => {
 
     const loadSharedUsers = async () => {
         try {
-            const response = await fetch(`/api/trips/${tripId}/shared`);
+            const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/load_shared_users/${tripId}`);
             const data = await response.json();
-            setSharedUsers(data);
+            
+            if (response.ok) {
+                setSharedUsers(data.shared_users);
+            } else {
+                console.error('Error loading shared users:', data);
+            }
         } catch (error) {
-            console.error('Error loading shared users:', error);
+            console.error('Error:', error);
         }
     };
 
@@ -420,23 +453,33 @@ const TripDetail = () => {
         const formData = new FormData(e.target);
         const data = {
             username_or_email: formData.get('username_or_email'),
-            can_edit: formData.get('can_edit') === 'on'
+            can_edit: formData.get('can_edit') === 'on',
+            trip_id: tripId,
+            current_user_id:  localStorage.getItem('userId')  // You'll need to get this from your auth context
         };
 
         try {
-            const response = await fetch(`/api/trips/${tripId}/share`, {
+            const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/share_trip`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(data)
             });
+            
+            const responseData = await response.json();
+            
             if (response.ok) {
+                // Refresh shared users list
                 loadSharedUsers();
                 e.target.reset();
+            } else {
+                console.error('Error sharing trip:', responseData);
+                alert(`Error sharing trip: ${responseData.error || 'Unknown error'}`);
             }
         } catch (error) {
-            console.error('Error sharing trip:', error);
+            console.error('Error:', error);
+            alert('Failed to share trip. Please try again.');
         }
     };
 
@@ -578,7 +621,7 @@ const TripDetail = () => {
                                     <span>{user.username}</span>
                                     <button 
                                         className="btn btn-sm btn-danger"
-                                        onClick={() => unshareTrip(user.id)}
+                                        onClick={() => removeSharedUser(user.id)}
                                     >
                                         Remove
                                     </button>
