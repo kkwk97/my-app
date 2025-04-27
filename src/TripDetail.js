@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -13,6 +13,7 @@ L.Icon.Default.mergeOptions({
     shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
+
 const GOOGLE_MAPS_API_KEY = 'AIzaSyA74UbU1Wwv6pLjJerlhSCI3gIWbzcyLQs'; // Replace with your actual API key
 
 const TripDetail = () => {
@@ -21,7 +22,7 @@ const TripDetail = () => {
     const [duration, setDuration] = useState(null);
     const [isPublic, setIsPublic] = useState(false);
     const [expenses, setExpenses] = useState([]);
-
+    const currentUser = localStorage.getItem('userId') ;
     const [currentDay, setCurrentDay] = useState(1);
     const [locations, setLocations] = useState([]);
     const [markers, setMarkers] = useState([]);
@@ -46,6 +47,33 @@ const TripDetail = () => {
             [name]: value
         }));
     };
+
+    const removeSharedUser = async (userId) => {
+        try {
+            const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/${tripId}/${currentUser}/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Update shared users list
+                setSharedUsers(prevUsers =>
+                    prevUsers.filter(user => user.id !== userId)
+                );
+            } else {
+                console.error('Error removing shared user:', data);
+                alert(`Error removing shared user: ${data.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to remove shared user. Please try again.');
+        }
+    };
+
 
     const handleAddressChange = (e) => {
         const address = e.target.value;
@@ -73,7 +101,7 @@ const TripDetail = () => {
             if (status === 'OK' && results[0]) {
                 const location = results[0].geometry.location;
                 console.log('Geocoding results:', results[0]);
-                
+
                 setNewLocation(prev => ({
                     ...prev,
                     latitude: location.lat(),
@@ -183,7 +211,7 @@ const TripDetail = () => {
                     user_id: userId
                 })
             });
-            
+
             if (response.ok) {
                 // Remove the user from the shared users list
                 setSharedUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
@@ -220,13 +248,13 @@ const TripDetail = () => {
                     day_number: currentDay
                 })
             });
-            
+
             if (response.ok) {
                 const expense = await response.json();
-                
+
                 // Update expenses list
                 setExpenses(prevExpenses => [...prevExpenses, expense]);
-                
+
                 // Close modal
                 setShowAddExpenseModal(false);
             } else {
@@ -251,11 +279,11 @@ const TripDetail = () => {
                     user_id: "test"  // Replace with actual user ID
                 })
             });
-            
+
             if (response.ok) {
                 const locations = await response.json();
                 setLocations(locations);
-                
+
                 // Add markers to map
                 const newMarkers = locations.map(location => ({
                     position: [location.latitude, location.longitude],
@@ -264,7 +292,7 @@ const TripDetail = () => {
                             <strong>{location.name}</strong>
                             {location.time && <p>Time: {location.time}</p>}
                             {location.notes && <p>Notes: {location.notes}</p>}
-                            <button 
+                            <button
                                 className="btn btn-danger btn-sm mt-2"
                                 onClick={() => deleteLocation(location.id)}
                             >
@@ -273,9 +301,9 @@ const TripDetail = () => {
                         </div>
                     )
                 }));
-                
+
                 setMarkers(newMarkers);
-                
+
                 // Fit map bounds to show all markers
                 if (map && newMarkers.length > 0) {
                     const bounds = L.latLngBounds(newMarkers.map(m => m.position));
@@ -289,11 +317,16 @@ const TripDetail = () => {
 
     const loadSharedUsers = async () => {
         try {
-            const response = await fetch(`/api/trips/${tripId}/shared`);
+            const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/load_shared_users/${tripId}`);
             const data = await response.json();
-            setSharedUsers(data);
+
+            if (response.ok) {
+                setSharedUsers(data.shared_users);
+            } else {
+                console.error('Error loading shared users:', data);
+            }
         } catch (error) {
-            console.error('Error loading shared users:', error);
+            console.error('Error:', error);
         }
     };
 
@@ -305,7 +338,7 @@ const TripDetail = () => {
                     <strong>{location.name}</strong>
                     {location.time && <p>Time: {location.time}</p>}
                     {location.notes && <p>Notes: {location.notes}</p>}
-                    <button 
+                    <button
                         className="btn btn-danger btn-sm mt-2"
                         onClick={() => deleteLocation(location.id)}
                     >
@@ -326,7 +359,7 @@ const TripDetail = () => {
                     <strong>{location.name}</strong>
                     {location.time && <p>Time: {location.time}</p>}
                     {location.notes && <p>Notes: {location.notes}</p>}
-                    <button 
+                    <button
                         className="btn btn-danger btn-sm mt-2"
                         onClick={() => deleteLocation(location.id)}
                     >
@@ -361,14 +394,14 @@ const TripDetail = () => {
                     dayNumber: currentDay
                 })
             });
-            
+
             if (response.ok) {
                 const location = await response.json();
                 addLocationToMap(location);
-                
+
                 // Update the locations list
                 setLocations(prevLocations => [...prevLocations, location]);
-                
+
                 // Reset the form
                 setNewLocation({
                     name: '',
@@ -378,7 +411,7 @@ const TripDetail = () => {
                     latitude: '',
                     longitude: ''
                 });
-                
+
                 // Close the modal
                 setShowAddLocationModal(false);
             }
@@ -395,15 +428,15 @@ const TripDetail = () => {
                     'Content-Type': 'application/json',
                 }
             });
-            
+
             if (response.ok) {
                 // Remove location from state
-                setLocations(prevLocations => 
+                setLocations(prevLocations =>
                     prevLocations.filter(loc => loc.id !== locationId)
                 );
-                
+
                 // Remove marker from map
-                setMarkers(prevMarkers => 
+                setMarkers(prevMarkers =>
                     prevMarkers.filter(marker => marker.id !== locationId)
                 );
             } else {
@@ -420,25 +453,84 @@ const TripDetail = () => {
         const formData = new FormData(e.target);
         const data = {
             username_or_email: formData.get('username_or_email'),
-            can_edit: formData.get('can_edit') === 'on'
+            can_edit: formData.get('can_edit') === 'on',
+            trip_id: tripId,
+            current_user_id:  localStorage.getItem('userId')  // You'll need to get this from your auth context
         };
 
         try {
-            const response = await fetch(`/api/trips/${tripId}/share`, {
+            const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/share_trip`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(data)
             });
+
+            const responseData = await response.json();
+
             if (response.ok) {
+                // Refresh shared users list
                 loadSharedUsers();
                 e.target.reset();
+            } else {
+                console.error('Error sharing trip:', responseData);
+                alert(`Error sharing trip: ${responseData.error || 'Unknown error'}`);
             }
         } catch (error) {
-            console.error('Error sharing trip:', error);
+            console.error('Error:', error);
+            alert('Failed to share trip. Please try again.');
         }
     };
+
+    const [expenses, setExpenses] = useState([]);
+    const [summary, setSummary] = useState([]);
+    const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+    const [newExpense, setNewExpense] = useState({
+      description: "",
+      amount: "",
+      splits: [],
+    });
+
+    useEffect(() => {
+      fetchExpenses();
+    }, [trip.id]);
+
+    const fetchExpenses = async () => {
+      try {
+        const response = await fetch(`/expenses/${trip.id}/user/${yourUserId}`);
+        const data = await response.json();
+        setExpenses(data);
+
+        const computedSummary = computeSummary(data);
+        setSummary(computedSummary);
+      } catch (error) {
+        console.error("Error fetching expenses:", error);
+      }
+    };
+
+    const computeSummary = (expenses) => {
+      const userTotals = {};
+
+      expenses.forEach((expense) => {
+        const payer = expense.paid_by;
+        userTotals[payer] = userTotals[payer] || { spent: 0, owed: 0 };
+        userTotals[payer].spent += parseFloat(expense.amount);
+
+        expense.splits.forEach((split) => {
+          userTotals[split.username] = userTotals[split.username] || { spent: 0, owed: 0 };
+          userTotals[split.username].owed += parseFloat(split.amount || 0);
+        });
+      });
+
+      return Object.keys(userTotals).map((name) => ({
+        name,
+        spent: userTotals[name].spent.toFixed(2),
+        owed: userTotals[name].owed.toFixed(2),
+        balance: (userTotals[name].spent - userTotals[name].owed).toFixed(2),
+      }));
+    };
+
 
     if (!trip) return <div>Loading...</div>;
 
@@ -476,9 +568,9 @@ const TripDetail = () => {
             {/* Map and Locations Container */}
             <div className="row">
                 <div className="col-md-8">
-                    <MapContainer 
-                        center={[0, 0]} 
-                        zoom={2} 
+                    <MapContainer
+                        center={[0, 0]}
+                        zoom={2}
                         style={{ height: '400px' }}
                         whenCreated={map => {
                             // Fit bounds when markers are added
@@ -503,7 +595,7 @@ const TripDetail = () => {
                     <div className="card">
                         <div className="card-header d-flex justify-content-between align-items-center">
                             <h5 className="card-title mb-0">Locations</h5>
-                            <button 
+                            <button
                                 className="btn btn-primary btn-sm"
                                 onClick={() => setShowAddLocationModal(true)}
                             >
@@ -521,7 +613,7 @@ const TripDetail = () => {
                                             </small>
                                         </p>
                                         <p className="card-text">{location.notes || ''}</p>
-                                        <button 
+                                        <button
                                             className="btn btn-danger btn-sm"
                                             onClick={() => deleteLocation(location.id)}
                                         >
@@ -546,19 +638,19 @@ const TripDetail = () => {
                             <label htmlFor="username_or_email" className="form-label">
                                 Username or Email
                             </label>
-                            <input 
-                                type="text" 
-                                className="form-control" 
-                                id="username_or_email" 
+                            <input
+                                type="text"
+                                className="form-control"
+                                id="username_or_email"
                                 name="username_or_email"
                                 required
                             />
                         </div>
                         <div className="mb-3">
                             <div className="form-check">
-                                <input 
-                                    className="form-check-input" 
-                                    type="checkbox" 
+                                <input
+                                    className="form-check-input"
+                                    type="checkbox"
                                     id="can_edit"
                                     name="can_edit"
                                 />
@@ -576,9 +668,9 @@ const TripDetail = () => {
                             {sharedUsers.map(user => (
                                 <div key={user.id} className="d-flex justify-content-between align-items-center mb-2">
                                     <span>{user.username}</span>
-                                    <button 
+                                    <button
                                         className="btn btn-sm btn-danger"
-                                        onClick={() => unshareTrip(user.id)}
+                                        onClick={() => removeSharedUser(user.id)}
                                     >
                                         Remove
                                     </button>
@@ -596,9 +688,9 @@ const TripDetail = () => {
                         <div className="modal-content">
                         <div className="modal-header">
                                 <h5 className="modal-title">Add Location</h5>
-                                <button 
-                                    type="button" 
-                                    className="btn-close" 
+                                <button
+                                    type="button"
+                                    className="btn-close"
                                     onClick={() => setShowAddLocationModal(false)}
                                 ></button>
                             </div>
@@ -606,9 +698,9 @@ const TripDetail = () => {
                                 <form id="addLocationForm" onSubmit={handleLocationSubmit}>
                                     <div className="mb-3">
                                         <label htmlFor="location-name" className="form-label">Location Name</label>
-                                        <input 
-                                            type="text" 
-                                            className="form-control" 
+                                        <input
+                                            type="text"
+                                            className="form-control"
                                             id="location-name"
                                             name="name"
                                             value={newLocation.name}
@@ -618,9 +710,9 @@ const TripDetail = () => {
                                     </div>
                                     <div className="mb-3">
                                         <label htmlFor="location-address" className="form-label">Address</label>
-                                        <input 
-                                            type="text" 
-                                            className="form-control" 
+                                        <input
+                                            type="text"
+                                            className="form-control"
                                             id="location-address"
                                             name="address"
                                             value={newLocation.address}
@@ -637,9 +729,9 @@ const TripDetail = () => {
                                     </div>
                                     <div className="mb-3">
                                         <label htmlFor="location-time" className="form-label">Time</label>
-                                        <input 
-                                            type="time" 
-                                            className="form-control" 
+                                        <input
+                                            type="time"
+                                            className="form-control"
                                             id="location-time"
                                             name="time"
                                             value={newLocation.time}
@@ -648,8 +740,8 @@ const TripDetail = () => {
                                     </div>
                                     <div className="mb-3">
                                         <label htmlFor="location-notes" className="form-label">Notes</label>
-                                        <textarea 
-                                            className="form-control" 
+                                        <textarea
+                                            className="form-control"
                                             id="location-notes"
                                             name="notes"
                                             value={newLocation.notes}
@@ -662,16 +754,16 @@ const TripDetail = () => {
                                 </form>
                             </div>
                             <div className="modal-footer">
-                                <button 
-                                    type="button" 
-                                    className="btn btn-secondary" 
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
                                     onClick={() => setShowAddLocationModal(false)}
                                 >
                                     Cancel
                                 </button>
-                                <button 
-                                    type="button" 
-                                    className="btn btn-primary" 
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
                                     onClick={handleLocationSubmit}
                                 >
                                     Save Location
@@ -682,6 +774,39 @@ const TripDetail = () => {
                 </div>
             )}
 
+            {/*show expense summary table*/}
+            <div className="card mt-4">
+              <div className="card-header">
+                <h5 className="mb-0">Trip Expenses Summary</h5>
+              </div>
+              <div className="card-body p-0">
+                <table className="table table-striped mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th>User</th>
+                      <th>Total Spent</th>
+                      <th>Total Owed</th>
+                      <th>Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {summary.map((item, idx) => (
+                      <tr key={idx}>
+                        <td>{item.name}</td>
+                        <td>${item.spent}</td>
+                        <td>${item.owed}</td>
+                        <td className={parseFloat(item.balance) >= 0 ? "text-success" : "text-danger"}>
+                          {parseFloat(item.balance) >= 0 ? "+" : ""}
+                          ${item.balance}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+
             {/* Add Expense Modal */}
             {showAddExpenseModal && (
                 <div className="modal show" style={{ display: 'block' }}>
@@ -689,9 +814,9 @@ const TripDetail = () => {
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h5 className="modal-title">Add New Expense</h5>
-                                <button 
-                                    type="button" 
-                                    className="btn-close" 
+                                <button
+                                    type="button"
+                                    className="btn-close"
                                     onClick={() => setShowAddExpenseModal(false)}
                                 ></button>
                             </div>
@@ -701,9 +826,9 @@ const TripDetail = () => {
                                         <label htmlFor="description" className="form-label">
                                             Expense Description
                                         </label>
-                                        <input 
-                                            type="text" 
-                                            className="form-control" 
+                                        <input
+                                            type="text"
+                                            className="form-control"
                                             name="description"
                                             required
                                         />
@@ -712,10 +837,10 @@ const TripDetail = () => {
                                         <label htmlFor="amount" className="form-label">
                                             Amount
                                         </label>
-                                        <input 
-                                            type="number" 
-                                            step="0.01" 
-                                            className="form-control" 
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            className="form-control"
                                             name="amount"
                                             required
                                         />
@@ -736,10 +861,10 @@ const TripDetail = () => {
                                         <label className="form-label">Shared By</label>
                                         {trip?.participants?.map(user => (
                                             <div key={user.id} className="form-check">
-                                                <input 
-                                                    className="form-check-input" 
-                                                    type="checkbox" 
-                                                    name="shared_by" 
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    name="shared_by"
                                                     value={user.id}
                                                     defaultChecked
                                                 />
@@ -752,16 +877,16 @@ const TripDetail = () => {
                                 </form>
                             </div>
                             <div className="modal-footer">
-                                <button 
-                                    type="button" 
-                                    className="btn btn-secondary" 
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
                                     onClick={() => setShowAddExpenseModal(false)}
                                 >
                                     Cancel
                                 </button>
-                                <button 
-                                    type="button" 
-                                    className="btn btn-primary" 
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
                                     onClick={handleExpenseSubmit}
                                 >
                                     Add Expense
@@ -771,6 +896,44 @@ const TripDetail = () => {
                     </div>
                 </div>
             )}
+
+            {/*expense detail*/}
+//            <div className="card mt-4">
+//              <div className="card-header">
+//                <h5 className="mb-0">Trip Expenses Details</h5>
+//              </div>
+//              <div className="card-body p-0">
+//                <table className="table table-striped mb-0">
+//                  <thead className="table-light">
+//                    <tr>
+//                      <th>S/N</th>
+//                      <th>Expense</th>
+//                      <th>Amount</th>
+//                      <th>Paid By</th>
+//                      <th>Shared By</th>
+//                      <th>Per Person</th>
+//                    </tr>
+//                  </thead>
+//                  <tbody>
+//                    {expenses.map((expense, idx) => (
+//                      <tr key={expense.id}>
+//                        <td>{idx + 1}</td>
+//                        <td>{expense.description}</td>
+//                        <td>${expense.amount}</td>
+//                        <td>{expense.paid_by}</td>
+//                        <td>{expense.splits.map((split) => split.username).join(", ")}</td>
+//                        <td>
+//                          ${(
+//                            parseFloat(expense.amount) / (expense.splits.length || 1)
+//                          ).toFixed(2)}
+//                        </td>
+//                      </tr>
+//                    ))}
+//                  </tbody>
+//                </table>
+//              </div>
+//            </div>
+
         </div>
         </BaseLayout>
     );
