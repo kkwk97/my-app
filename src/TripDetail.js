@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -13,6 +13,7 @@ L.Icon.Default.mergeOptions({
     shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
+
 const GOOGLE_MAPS_API_KEY = 'AIzaSyA74UbU1Wwv6pLjJerlhSCI3gIWbzcyLQs'; // Replace with your actual API key
 
 const TripDetail = () => {
@@ -21,7 +22,7 @@ const TripDetail = () => {
     const [duration, setDuration] = useState(null);
     const [isPublic, setIsPublic] = useState(false);
     const [expenses, setExpenses] = useState([]);
-
+    const currentUser = localStorage.getItem('userId') ;
     const [currentDay, setCurrentDay] = useState(1);
     const [locations, setLocations] = useState([]);
     const [markers, setMarkers] = useState([]);
@@ -46,6 +47,33 @@ const TripDetail = () => {
             [name]: value
         }));
     };
+
+    const removeSharedUser = async (userId) => {
+        try {
+            const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/${tripId}/${currentUser}/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Update shared users list
+                setSharedUsers(prevUsers => 
+                    prevUsers.filter(user => user.id !== userId)
+                );
+            } else {
+                console.error('Error removing shared user:', data);
+                alert(`Error removing shared user: ${data.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to remove shared user. Please try again.');
+        }
+    };
+    
 
     const handleAddressChange = (e) => {
         const address = e.target.value;
@@ -289,11 +317,16 @@ const TripDetail = () => {
 
     const loadSharedUsers = async () => {
         try {
-            const response = await fetch(`/api/trips/${tripId}/shared`);
+            const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/load_shared_users/${tripId}`);
             const data = await response.json();
-            setSharedUsers(data);
+            
+            if (response.ok) {
+                setSharedUsers(data.shared_users);
+            } else {
+                console.error('Error loading shared users:', data);
+            }
         } catch (error) {
-            console.error('Error loading shared users:', error);
+            console.error('Error:', error);
         }
     };
 
@@ -420,25 +453,98 @@ const TripDetail = () => {
         const formData = new FormData(e.target);
         const data = {
             username_or_email: formData.get('username_or_email'),
-            can_edit: formData.get('can_edit') === 'on'
+            can_edit: formData.get('can_edit') === 'on',
+            trip_id: tripId,
+            current_user_id:  localStorage.getItem('userId')  // You'll need to get this from your auth context
         };
 
         try {
-            const response = await fetch(`/api/trips/${tripId}/share`, {
+            const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/share_trip`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(data)
             });
+            
+            const responseData = await response.json();
+            
             if (response.ok) {
+                // Refresh shared users list
                 loadSharedUsers();
                 e.target.reset();
+            } else {
+                console.error('Error sharing trip:', responseData);
+                alert(`Error sharing trip: ${responseData.error || 'Unknown error'}`);
             }
         } catch (error) {
-            console.error('Error sharing trip:', error);
+            console.error('Error:', error);
+            alert('Failed to share trip. Please try again.');
         }
     };
+
+    const [summary, setSummary] = useState([]);
+    const [newExpense, setNewExpense] = useState({
+      description: "",
+      amount: "",
+      splits: [],
+    });
+
+    useEffect(() => {
+      fetchExpenses();
+    }, [tripId]);
+
+    const fetchExpenses = async () => {
+        console.log("Trip ID:", tripId);
+        console.log(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/manage_expense/${tripId}/user/${localStorage.getItem('userId')}`);
+
+        try {
+          const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/manage_expense/${tripId}/user/${localStorage.getItem('userId')}`, {
+            method: 'GET',
+            mode: 'cors',  // <---- add this
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+      
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+          }
+      
+          const data = await response.json();
+          setExpenses(data);
+      
+          const computedSummary = computeSummary(data);
+          setSummary(computedSummary);
+        } catch (error) {
+          console.error("Error fetching expenses:", error);
+        }
+      };
+      
+
+    const computeSummary = (expenses) => {
+      const userTotals = {};
+
+      expenses.forEach((expense) => {
+        const payer = expense.paid_by;
+        userTotals[payer] = userTotals[payer] || { spent: 0, owed: 0 };
+        userTotals[payer].spent += parseFloat(expense.amount);
+
+        expense.splits.forEach((split) => {
+          userTotals[split.username] = userTotals[split.username] || { spent: 0, owed: 0 };
+          userTotals[split.username].owed += parseFloat(split.amount || 0);
+        });
+      });
+
+      return Object.keys(userTotals).map((name) => ({
+        name,
+        spent: userTotals[name].spent.toFixed(2),
+        owed: userTotals[name].owed.toFixed(2),
+        balance: (userTotals[name].spent - userTotals[name].owed).toFixed(2),
+      }));
+    };
+
 
     if (!trip) return <div>Loading...</div>;
 
@@ -578,7 +684,7 @@ const TripDetail = () => {
                                     <span>{user.username}</span>
                                     <button 
                                         className="btn btn-sm btn-danger"
-                                        onClick={() => unshareTrip(user.id)}
+                                        onClick={() => removeSharedUser(user.id)}
                                     >
                                         Remove
                                     </button>
@@ -682,6 +788,40 @@ const TripDetail = () => {
                 </div>
             )}
 
+            {/*show expense summary table*/}
+            
+            <div className="card mt-4">
+              <div className="card-header">
+                <h5 className="mb-0">Trip Expenses Summary</h5>
+              </div>
+              <div className="card-body p-0">
+                <table className="table table-striped mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th>User</th>
+                      <th>Total Spent</th>
+                      <th>Total Owed</th>
+                      <th>Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {summary.map((item, idx) => (
+                      <tr key={idx}>
+                        <td>{item.name}</td>
+                        <td>${item.spent}</td>
+                        <td>${item.owed}</td>
+                        <td className={parseFloat(item.balance) >= 0 ? "text-success" : "text-danger"}>
+                          {parseFloat(item.balance) >= 0 ? "+" : ""}
+                          ${item.balance}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+
             {/* Add Expense Modal */}
             {showAddExpenseModal && (
                 <div className="modal show" style={{ display: 'block' }}>
@@ -771,6 +911,7 @@ const TripDetail = () => {
                     </div>
                 </div>
             )}
+
         </div>
         </BaseLayout>
     );
