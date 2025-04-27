@@ -1428,6 +1428,123 @@ const TripDetail = () => {
         }
     };
 
+    const [summary, setSummary] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [newExpense, setNewExpense] = useState({
+      description: "",
+      amount: "",
+      splits: [],
+    });
+
+    useEffect(() => {
+    fetchExpenses();
+      fetchExpenses2();
+    }, [tripId]);
+
+    const fetchExpenses2 = async () => {
+        console.log("Trip ID:", tripId);
+        console.log(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/get_expense/${tripId}/user/${localStorage.getItem('userId')}`);
+
+        try {
+          const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/get_expense/${tripId}/user/${localStorage.getItem('userId')}`, {
+            method: 'GET',
+            mode: 'cors',  // <---- add this
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          console.log('Full response:', response);
+      
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+          }
+      
+          const data = await response.json();
+          setSummary(data);
+      
+        //   const computedSummary = computeSummary(data);
+        //   setSummary(computedSummary);
+        } catch (error) {
+          console.error("Error fetching expenses:", error);
+        } finally {
+            setLoading(false); // <---- Add this to stop loading spinner
+          }
+      };
+      
+
+    const computeSummary = (expenses) => {
+      const userTotals = {};
+
+      expenses.forEach((expense) => {
+        const payer = expense.paid_by;
+        userTotals[payer] = userTotals[payer] || { spent: 0, owed: 0 };
+        userTotals[payer].spent += parseFloat(expense.amount);
+
+        if (expense.splits) {
+            expense.splits.forEach((split) => {
+              userTotals[split.username] = userTotals[split.username] || { spent: 0, owed: 0 };
+              userTotals[split.username].owed += parseFloat(split.amount || 0);
+            });
+          }
+      });
+
+      return Object.keys(userTotals).map((name) => ({
+        name,
+        spent: userTotals[name].spent.toFixed(2),
+        owed: userTotals[name].owed.toFixed(2),
+        balance: (userTotals[name].spent - userTotals[name].owed).toFixed(2),
+      }));
+    };
+
+
+    const fetchExpenses = async () => {
+        console.log("Trip ID:", tripId);
+        console.log(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/manage_expense/${tripId}/user/${localStorage.getItem('userId')}`);
+
+        try {
+          const response = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/manage_expense/${tripId}/user/${localStorage.getItem('userId')}`, {
+            method: 'GET',
+            mode: 'cors',  // <---- add this
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          console.log('Full response:', response);
+
+            const responseData = await response.json();
+                
+            
+            const expensesData = responseData;
+            
+            console.log('Fetched expenses:', expensesData);
+            const processedExpenses = expensesData.map(expense => {
+            // Process expenses to add shared_by and per_person info
+            const splits = expense.splits || [];
+            const splitUsernames = splits.map(split => split.user_id).join(', ');
+            const totalSplitAmount = splits.reduce((sum, split) => sum + (split.amount || 0), 0);
+            const perPerson = splits.length > 0 ? (totalSplitAmount / splits.length).toFixed(2) : 'N/A';
+
+
+                return {
+                    id: expense.id,
+                    description: expense.description,
+                    amount: parseFloat(expense.amount).toFixed(2),
+                    paid_by: expense.paid_by_id,
+                    shared_by: splitUsernames || 'N/A',
+                    per_person: perPerson
+                };
+            });
+
+            setExpenses(processedExpenses);
+            setLoading(false);
+            
+        } catch (error) {
+            console.error('Error fetching expenses:', error);
+            setLoading(false);
+        }
+        };
+
     if (!trip) return <div>Loading...</div>;
 
     return (
@@ -1670,6 +1787,38 @@ const TripDetail = () => {
                 </div>
             )}
 
+              {/*show expense summary table*/}
+              <div className="card mt-4">
+              <div className="card-header">
+                <h5 className="mb-0">Trip Expenses Summary</h5>
+              </div>
+              <div className="card-body p-0">
+                <table className="table table-striped mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th>User</th>
+                      <th>Total Spent</th>
+                      <th>Total Owed</th>
+                      <th>Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {summary.map((item, idx) => (
+                      <tr key={idx}>
+                        <td>{item.name}</td>
+                        <td>${item.spent}</td>
+                        <td>${item.owed}</td>
+                        <td className={parseFloat(item.balance) >= 0 ? "text-success" : "text-danger"}>
+                          {parseFloat(item.balance) >= 0 ? "+" : ""}
+                          ${item.balance}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             {/* Add Expense Modal */}
             {showAddExpenseModal && (
                 <div className="modal show" style={{ display: 'block' }}>
@@ -1759,6 +1908,40 @@ const TripDetail = () => {
                     </div>
                 </div>
             )}
+
+            {/*expense detail */}
+            <div className="card mt-4">
+      <div className="card-header">
+        <h5 className="mb-0">Trip Expenses Details</h5>
+      </div>
+      <div className="card-body p-0">
+        <table className="table table-striped mb-0">
+          <thead className="table-light">
+            <tr>
+              <th>S/N</th>
+              <th>Expense</th>
+              <th>Amount</th>
+              <th>Paid By</th>
+              <th>Shared By</th>
+              <th>Per Person</th>
+            </tr>
+          </thead>
+          <tbody>
+            {expenses.map((expense, index) => (
+              <tr key={expense.id || index}>
+
+                <td>{index + 1}</td>
+                <td>{expense.description}</td>
+                <td>${expense.amount}</td>
+                <td>{expense.paid_by}</td>
+                <td>{expense.shared_by}</td>
+                <td>${expense.per_person}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
         </div>
         </BaseLayout>
     );
