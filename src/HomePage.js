@@ -36,6 +36,44 @@ const HomePage = ({ isAuthenticated }) => {
     }
   };
 
+  const handleCopy = async (postId) => {
+    const confirmCopy = window.confirm('Are you sure you want to copy this post into your trips?');
+    if (!confirmCopy) return;
+  
+    try {
+      const data = {
+        post_id: postId,
+        username: userId  // only userId needed
+      };
+
+      const url = 'https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/posts/copy-post';
+
+      // 🔥 Alert full API call details
+      alert(`API URL: ${url}\n\nRequest Body:\n${JSON.stringify(data, null, 2)}`);
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+  
+      if (res.ok) {
+        alert('Post copied to your trips!');
+        fetchPosts();
+      } else {
+        const errorData = await res.json();
+        console.error('Server responded with error:', errorData);  // 🔥 Log server error
+        alert(errorData.message || 'Failed to copy post.');
+      }
+    } catch (error) {
+      console.error('Error copying post:', error);
+      alert('Something went wrong while copying post!');
+    }
+  };
+  
+
   useEffect(() => {
     fetchPosts();
   }, []);
@@ -131,18 +169,30 @@ const HomePage = ({ isAuthenticated }) => {
                       </div>
                     )}
 
-                    {/* Edit and Delete buttons */}
-                    {isAuthenticated && post.author?.username === userId && (
-                      <div className="mt-2 d-flex gap-2">
-                        <Link to={`/edit-post/${post.id}`} className="btn btn-primary btn-sm">
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(post.id)}
-                          className="btn btn-danger btn-sm"
-                        >
-                          Delete
-                        </button>
+                    {/* Edit, Delete, and Copy buttons */}
+                    {isAuthenticated && (
+                      <div className="mt-2 d-flex gap-2 flex-wrap">
+                        {post.author?.username === userId ? (
+                          <>
+                            <Link to={`/edit-post/${post.id}`} className="btn btn-primary btn-sm">
+                              Edit
+                            </Link>
+                            <button
+                              onClick={() => handleDelete(post.id)}
+                              className="btn btn-danger btn-sm"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        ) : (
+                          // Show Copy button if post not owned
+                          <button
+                            onClick={() => handleCopy(post.id)}
+                            className="btn btn-secondary btn-sm"
+                          >
+                            Copy Post
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

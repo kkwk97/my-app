@@ -43,7 +43,7 @@ const NewTripPage = () => {
       });
 
       if (res.ok) {
-        navigate('/itinerary');
+        navigate('/trips');
       } else {
         const errorData = await res.json();
         alert(errorData.message || 'Failed to create trip');
