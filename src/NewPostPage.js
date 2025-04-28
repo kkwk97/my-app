@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import BaseLayout from './BaseLayout';
 
 // ✅ Get current user ID from localStorage
-const userId = localStorage.getItem('userId');
+// const userId = localStorage.getItem('userId');
 
 const NewPostPage = () => {
   const navigate = useNavigate();
@@ -55,7 +55,7 @@ const NewPostPage = () => {
           };
         })
       );
-
+      const userId = localStorage.getItem('userId');
       const data = {
         title: formData.title,
         location: formData.location,
@@ -71,10 +71,12 @@ const NewPostPage = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
+    
       });
 
       if (res.ok) {
         navigate('/home');
+        console.log(localStorage.getItem("userId"))
       } else {
         const errorData = await res.json();
         alert(errorData.message || 'Something went wrong!');
