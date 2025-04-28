@@ -267,7 +267,7 @@ const FindTripsPage = () => {
                       <div className="d-flex flex-wrap">
                         <button
                           className="btn btn-primary me-2 mb-2"
-                          onClick={() => navigate(`/public-trip/${trip['trip-id']}`)}
+                          onClick={() => navigate(`/shared-trip/${trip['trip-id']}`)}
                         >
                           View Itinerary
                         </button>
