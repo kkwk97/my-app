@@ -99,7 +99,7 @@ const HomePage = ({ isAuthenticated }) => {
   return (
     <BaseLayout>
       <div className="container">
-        <h1 className="my-4">Welcome Back {userId}</h1>
+        <h1 className="my-4">Welcome Back</h1>
 
         {/* Search Form */}
         <form onSubmit={handleSearch} className="mb-4">
