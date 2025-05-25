@@ -963,6 +963,8 @@ const GOOGLE_MAPS_API_KEY = 'AIzaSyA74UbU1Wwv6pLjJerlhSCI3gIWbzcyLQs'; // Replac
 
 const TripDetail = () => {
     const { tripId } = useParams();
+    const [users, setUsers] = useState([]);
+    const [setTripId] = useState('');
     const [trip, setTrip] = useState(null);
     const [duration, setDuration] = useState(null);
     const [isPublic, setIsPublic] = useState(false);
@@ -972,8 +974,43 @@ const TripDetail = () => {
     const [locations, setLocations] = useState([]);
     const [markers, setMarkers] = useState([]);
     const [sharedUsers, setSharedUsers] = useState([]);
+    const [showForm, setShowForm] = useState(false);
     const [showAddLocationModal, setShowAddLocationModal] = useState(false);
     const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+    const [description, setDescription] = useState('');
+    const [amount, setAmount] = useState('');
+    const [paidById, setPaidById] = useState('');
+    const [sharedByIds, setSharedByIds] = useState('');
+
+    useEffect(() => {
+    if (!tripId) return;
+        const loadSharedUsers = async () => {
+        try {
+            const res = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/trips/load_shared_users/${tripId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+            });
+            const data = await res.json();
+            if (res.ok) {
+            // your Lambda returns { shared_users: [...] }
+               
+            setUsers(data.shared_users || []);
+
+            } else {
+            console.error('Error loading shared users:', data);
+            }
+        } catch (err) {
+            console.error('Network error fetching shared users:', err);
+        }
+        };
+
+        loadSharedUsers();
+    }, [tripId]);
+    
     const [newLocation, setNewLocation] = useState({
         name: '',
         address: '',
@@ -1453,7 +1490,7 @@ const TripDetail = () => {
               'Content-Type': 'application/json'
             }
           });
-          console.log('Full response:', response);
+          console.log('Full response1111111111111:', response);
       
           if (!response.ok) {
             const errorText = await response.text();
@@ -1471,7 +1508,50 @@ const TripDetail = () => {
             setLoading(false); // <---- Add this to stop loading spinner
           }
       };
-      
+    
+    const handleSubmit = async e => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage('');
+        setError('');
+
+        const payloadToAddExpense = {
+        trip_id: tripId,
+        description,
+        amount,
+        paid_by_id: paidById,
+        shared_by_ids: sharedByIds
+        };
+
+
+        const res = await fetch(`https://dp0zpyerpl.execute-api.ap-southeast-2.amazonaws.com/UAT/create_expense`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payloadToAddExpense),
+            });
+
+        const data = await res.json();
+        if (res.ok) {
+            setMessage(data.message || 'Expense added!');
+            // reset
+            //setTripId('');
+            console.log("here");
+            console.log(paidById);
+            console.log(sharedByIds);
+            setDescription('');
+            setAmount('');
+            setPaidById('');
+            setSharedByIds('');
+            setShowForm(false);
+            setTimeout(() => {
+                window.location.reload();
+            }, 5000);
+        } else {
+            setError(data.error || 'Failed to add expense');
+        }
+    }
+        
+
 
     const computeSummary = (expenses) => {
       const userTotals = {};
@@ -1787,6 +1867,123 @@ const TripDetail = () => {
                 </div>
             )}
 
+            <div className="max-w-sm mx-auto p-4 bg-white shadow rounded">
+            <button
+                onClick={() => setShowForm(open => !open)}
+                style={{
+                    marginBottom: '16px',
+                    backgroundColor: '#28a745', // Green
+                    color: 'white',
+                    padding: '10px 16px',
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                    }}
+                    onMouseOver={e => (e.target.style.backgroundColor = '#218838')}
+                    onMouseOut={e => (e.target.style.backgroundColor = '#28a745')}
+            >
+                {showForm ? 'Cancel' : 'Add Expense'}
+            </button>
+
+            {showForm && (
+                <form onSubmit={handleSubmit}  className="space-y-4 w-full">
+                    {/* Description */}
+                    <div  className="w-full">
+                    <label className="block mb-1 font-medium">Description</label>
+                    <input
+                        type="text"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        style={{ width: '100%', marginBottom: '12px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        required
+                    />
+                    </div>
+
+                    {/* Amount */}
+                    <div>
+                    <label className="block mb-1 font-medium">Amount</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        style={{ width: '100%', marginBottom: '12px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        required
+                    />
+                    </div>
+
+                    {/* Paid By */}
+                    <div>
+                    <label className="block mb-1 font-medium">Paid By</label>
+                    <select
+                        value={paidById}
+                        onChange={(e) => setPaidById(e.target.value)}
+                        style={{ width: '100%', marginBottom: '12px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        required
+                    >
+                        <option value="">Select User</option>
+                        <option value={currentUser}>
+                        {currentUser}
+                        </option>
+                        {users.map((user) => (
+                        <option key={user.username} value={user['id']}>
+                            {user.username}
+                        </option>
+                        ))}
+                    </select>
+                    </div>
+
+                    {/* Shared By */}
+                    <div>
+                    <label className="block mb-1 font-medium">Shared By</label>
+                    <select
+                        multiple
+                        value={sharedByIds}
+                        onChange={(e) =>
+                        setSharedByIds(Array.from(e.target.selectedOptions, (opt) => opt.value))
+                        }
+                        style={{ width: '100%', marginBottom: '12px', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        required
+                    >
+                        <option value={currentUser}>
+                        {currentUser}
+                        </option>
+                        {users.map((user) => (
+                        <option key={user['id']} value={user['id']}>
+                            {user.username}
+                        </option>
+                        ))}
+                    </select>
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                    type="submit"
+                    disabled={loading}
+                     style={{
+                    marginBottom: '16px',
+                    backgroundColor: '#28a745', // Green
+                    color: 'white',
+                    padding: '10px 16px',
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                    }}
+                    onMouseOver={e => (e.target.style.backgroundColor = '#218838')}
+                    onMouseOut={e => (e.target.style.backgroundColor = '#28a745')}
+                    >
+                    {loading ? 'Adding...' : 'Add Expense'}
+                    </button>
+                </form>
+                )}
+
+
+            {message && <p className="mt-4 text-green-600">{message}</p>}
+            {error && <p className="mt-4 text-red-600">{error}</p>}
+            </div>
+
               {/*show expense summary table*/}
               <div className="card mt-4">
               <div className="card-header">
@@ -1818,96 +2015,8 @@ const TripDetail = () => {
                 </table>
               </div>
             </div>
-
-            {/* Add Expense Modal */}
-            {showAddExpenseModal && (
-                <div className="modal show" style={{ display: 'block' }}>
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">Add New Expense</h5>
-                                <button 
-                                    type="button" 
-                                    className="btn-close" 
-                                    onClick={() => setShowAddExpenseModal(false)}
-                                ></button>
-                            </div>
-                            <div className="modal-body">
-                                <form onSubmit={handleExpenseSubmit}>
-                                    <div className="mb-3">
-                                        <label htmlFor="description" className="form-label">
-                                            Expense Description
-                                        </label>
-                                        <input 
-                                            type="text" 
-                                            className="form-control" 
-                                            name="description"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label htmlFor="amount" className="form-label">
-                                            Amount
-                                        </label>
-                                        <input 
-                                            type="number" 
-                                            step="0.01" 
-                                            className="form-control" 
-                                            name="amount"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label htmlFor="paid_by" className="form-label">
-                                            Paid By
-                                        </label>
-                                        <select name="paid_by" className="form-select" required>
-                                            {trip?.participants?.map(user => (
-                                                <option key={user.id} value={user.id}>
-                                                    {user.username}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Shared By</label>
-                                        {trip?.participants?.map(user => (
-                                            <div key={user.id} className="form-check">
-                                                <input 
-                                                    className="form-check-input" 
-                                                    type="checkbox" 
-                                                    name="shared_by" 
-                                                    value={user.id}
-                                                    defaultChecked
-                                                />
-                                                <label className="form-check-label">
-                                                    {user.username}
-                                                </label>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </form>
-                            </div>
-                            <div className="modal-footer">
-                                <button 
-                                    type="button" 
-                                    className="btn btn-secondary" 
-                                    onClick={() => setShowAddExpenseModal(false)}
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    type="button" 
-                                    className="btn btn-primary" 
-                                    onClick={handleExpenseSubmit}
-                                >
-                                    Add Expense
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+    
+        
 
             {/*expense detail */}
             <div className="card mt-4">
